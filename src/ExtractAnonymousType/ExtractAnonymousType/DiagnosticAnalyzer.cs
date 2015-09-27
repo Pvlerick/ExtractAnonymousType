@@ -44,19 +44,26 @@ namespace ExtractAnonymousType
         private static void AnalyzeSyntax(SyntaxNodeAnalysisContext context)
         {
             var localDeclaration = (LocalDeclarationStatementSyntax)context.Node;
+
             var typeKeyword = localDeclaration.Declaration.Type;
+            var variablesCount = localDeclaration.Declaration.Variables.Count;
 
             //Anonymous types are always declared with the var keyword and only one can be declared at the time
-            if (typeKeyword.IsVar && localDeclaration.Declaration.Variables.Count == 1)
+            if (typeKeyword.IsVar && variablesCount == 1)
             {
                 var variable = localDeclaration.Declaration.Variables[0];
 
                 var model = context.SemanticModel;
-                var variableSymbol = model.GetDeclaredSymbol(variable);
+                var variableSymbol = (ILocalSymbol)model.GetDeclaredSymbol(variable);
 
-                var diagnostic = Diagnostic.Create(Rule, variableSymbol.Locations[0], variableSymbol.Name);
+                var type = variableSymbol.Type;
 
-                context.ReportDiagnostic(diagnostic);
+                if (type.IsAnonymousType)
+                {
+                    var diagnostic = Diagnostic.Create(Rule, variableSymbol.Locations[0], variableSymbol.Name);
+
+                    context.ReportDiagnostic(diagnostic);
+                }
             }
         }
     }

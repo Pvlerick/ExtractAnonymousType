@@ -18,7 +18,7 @@ namespace ExtractAnonymousType
     [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(ExtractAnonymousTypeCodeFixProvider)), Shared]
     public class ExtractAnonymousTypeCodeFixProvider : CodeFixProvider
     {
-        private const string title = "Make uppercase";
+        private const string title = "Extract type from anonymous declaration";
 
         public sealed override ImmutableArray<string> FixableDiagnosticIds
         {

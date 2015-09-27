@@ -1,9 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="ExtractAnonymousType.Vsix.Ogone.e4fc0d3f-f1fe-4aa5-a5d0-1d3acdef2305" Version="1.0" Language="en-US" Publisher="pvl"/>
+    <Identity Id="ExtractAnonymousType.Vsix.Ogone.e4fc0d3f-f1fe-4aa5-a5d0-1d3acdef2305" Version="1.0" Language="en-US" Publisher="Philippe Vlérick"/>
     <DisplayName>ExtractAnonymousType.Vsix</DisplayName>
-    <Description xml:space="preserve">This is a sample diagnostic extension for the .NET Compiler Platform ("Roslyn").</Description>
+    <Description xml:space="preserve">An extrension that allows to create a full blown type out of an anonymous type.</Description>
+    <License>LICENSE</License>
   </Metadata>
   <Installation>
     <InstallationTarget Version="[14.0,]" Id="Microsoft.VisualStudio.Pro" />
