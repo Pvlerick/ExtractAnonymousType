@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using System;
 using TestHelper;
 using ExtractAnonymousType;
+using Xunit;
 
 namespace ExtractAnonymousType.Test
 {
@@ -54,24 +55,24 @@ namespace ExtractAnonymousType.Test
 
             VerifyCSharpDiagnostic(test, expected);
 
-            var fixtest = @"
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-    using System.Diagnostics;
+    //        var fixtest = @"
+    //using System;
+    //using System.Collections.Generic;
+    //using System.Linq;
+    //using System.Text;
+    //using System.Threading.Tasks;
+    //using System.Diagnostics;
 
-    namespace ConsoleApplication1
-    {
-        class C
-        {
-            void M()
-            {
-                var a = new { P = ""dummy"" };
-            }
-        }
-    }";
+    //namespace ConsoleApplication1
+    //{
+    //    class C
+    //    {
+    //        void M()
+    //        {
+    //            var a = new { P = ""dummy"" };
+    //        }
+    //    }
+    //}";
             //        VerifyCSharpFix(test, fixtest);
         }
 
