@@ -11,26 +11,22 @@ namespace ExtractAnonymousType.Test
     public class UnitTest : CodeFixVerifier
     {
 
-        //No diagnostics expected to show up
         [Fact]
-        public void TestMethod1()
+        public void NoDiagnosticWhenEmptyCode()
         {
+            // Fixture setup
             var test = @"";
-
+            // Exercise system & Verify outcome
             VerifyCSharpDiagnostic(test);
+            // Teardown 
         }
 
-        //Diagnostic and CodeFix both triggered and checked for
         [Fact]
-        public void TestMethod2()
+        public void CorrectDiagnosticWhenAnonymousTypeIsUsed()
         {
+            // Fixture setup
             var test = @"
     using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-    using System.Diagnostics;
 
     namespace ConsoleApplication1
     {
@@ -45,23 +41,20 @@ namespace ExtractAnonymousType.Test
             var expected = new DiagnosticResult
             {
                 Id = "ExtractAnonymousType",
-                Message = String.Format("Variable '{0}' is an anonymous type", "TypeName"),
+                Message = String.Format("Variable '{0}' is an anonymous type", "a"),
                 Severity = DiagnosticSeverity.Info,
                 Locations =
                     new[] {
-                            new DiagnosticResultLocation("Test0.cs", 13, 17)
+                            new DiagnosticResultLocation("Test0.cs", 10, 21)
                         }
             };
-
+            // Exercise system & Verify outcome
             VerifyCSharpDiagnostic(test, expected);
+            // Teardown 
+        }
 
     //        var fixtest = @"
     //using System;
-    //using System.Collections.Generic;
-    //using System.Linq;
-    //using System.Text;
-    //using System.Threading.Tasks;
-    //using System.Diagnostics;
 
     //namespace ConsoleApplication1
     //{
@@ -72,9 +65,14 @@ namespace ExtractAnonymousType.Test
     //            var a = new { P = ""dummy"" };
     //        }
     //    }
+    //
+    //    class A
+    //    {
+    //        public string P { get; set; }
+    //    }
     //}";
             //        VerifyCSharpFix(test, fixtest);
-        }
+    //}
 
         protected override CodeFixProvider GetCSharpCodeFixProvider()
         {

@@ -33,13 +33,16 @@ namespace ExtractAnonymousType
         public sealed override async Task RegisterCodeFixesAsync(CodeFixContext context)
         {
             var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
+            var model = await context.Document.GetSemanticModelAsync(context.CancellationToken).ConfigureAwait(false);
 
-            // TODO: Replace the following code with your own analysis, generating a CodeAction for each fix to suggest
-            var diagnostic = context.Diagnostics.First();
-            var diagnosticSpan = diagnostic.Location.SourceSpan;
+            foreach (var diagnostic in context.Diagnostics)
+            {
+                var diagnosticSpan = diagnostic.Location.SourceSpan;
 
-            // Find the type declaration identified by the diagnostic.
-            var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<TypeDeclarationSyntax>().First();
+                // Find the type declaration identified by the diagnostic.
+                var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<TypeDeclarationSyntax>().First();
+            }
+
 
             // Register a code action that will invoke the fix.
             context.RegisterCodeFix(
