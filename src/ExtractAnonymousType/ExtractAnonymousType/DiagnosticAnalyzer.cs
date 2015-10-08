@@ -24,6 +24,7 @@ namespace ExtractAnonymousType
         private static readonly LocalizableString Description =
             new LocalizableResourceString(nameof(Resources.AnalyzerDescription),
                 Resources.ResourceManager, typeof(Resources));
+
         //TODO Change Category
         private const string Category = "Naming";
 

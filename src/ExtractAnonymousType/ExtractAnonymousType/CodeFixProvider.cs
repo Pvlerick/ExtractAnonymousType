@@ -39,37 +39,51 @@ namespace ExtractAnonymousType
             {
                 var diagnosticSpan = diagnostic.Location.SourceSpan;
 
-                // Find the type declaration identified by the diagnostic.
-                var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<TypeDeclarationSyntax>().First();
+                // Find the type declaration identified by the diagnostic
+                // There can only be one, so First() can be called
+                var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf()
+                    .OfType<LocalDeclarationStatementSyntax>().First();
+
+                var typeInfo = model.GetTypeInfo(declaration.Declaration.Type);
+
+                // One more check, just because we can...
+                if (typeInfo.Type.IsAnonymousType)
+                {
+                    // Register a code action that will invoke the fix.
+                    context.RegisterCodeFix(
+                        CodeAction.Create(
+                            title: title,
+                            createChangedSolution: c => ExtractAnonymousType(context.Document, model, c),
+                            equivalenceKey: title),
+                        diagnostic);
+                }
+
             }
-
-
-            // Register a code action that will invoke the fix.
-            context.RegisterCodeFix(
-                CodeAction.Create(
-                    title: title,
-                    createChangedSolution: c => MakeUppercaseAsync(context.Document, declaration, c),
-                    equivalenceKey: title),
-                diagnostic);
         }
 
-        private async Task<Solution> MakeUppercaseAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
+        private async Task<Solution> ExtractAnonymousType(Document document, SemanticModel model,
+            CancellationToken cancellationToken)
         {
-            // Compute new uppercase name.
-            var identifierToken = typeDecl.Identifier;
-            var newName = identifierToken.Text.ToUpperInvariant();
+            //var def = typeInfo.Type.OriginalDefinition;
 
-            // Get the symbol representing the type to be renamed.
+            //var symbol = model.Compilation.GetSymbolsWithName(name => name == typeInfo.Type.Name);
             var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
-            var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
+            return null;
+            //// Compute new uppercase name.
+            //var identifierToken = typeDecl.Identifier;
+            //var newName = identifierToken.Text.ToUpperInvariant();
 
-            // Produce a new solution that has all references to that type renamed, including the declaration.
-            var originalSolution = document.Project.Solution;
-            var optionSet = originalSolution.Workspace.Options;
-            var newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, typeSymbol, newName, optionSet, cancellationToken).ConfigureAwait(false);
+            //// Get the symbol representing the type to be renamed.
+            //var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
+            //var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
 
-            // Return the new solution with the now-uppercase type name.
-            return newSolution;
+            //// Produce a new solution that has all references to that type renamed, including the declaration.
+            //var originalSolution = document.Project.Solution;
+            //var optionSet = originalSolution.Workspace.Options;
+            //var newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, typeSymbol, newName, optionSet, cancellationToken).ConfigureAwait(false);
+
+            //// Return the new solution with the now-uppercase type name.
+            //return newSolution;
         }
     }
 }
