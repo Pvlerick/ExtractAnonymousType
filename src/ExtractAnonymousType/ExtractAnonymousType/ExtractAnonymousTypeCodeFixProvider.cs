@@ -13,6 +13,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Text;
+using Microsoft.CodeAnalysis.Formatting;
 
 namespace ExtractAnonymousType
 {
@@ -41,9 +42,12 @@ namespace ExtractAnonymousType
                 var diagnosticSpan = diagnostic.Location.SourceSpan;
 
                 // Find the type declaration identified by the diagnostic
-                // There can only be one, so First() can be called
+                // There can only be one, so Single() can be called
                 var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf()
-                    .OfType<LocalDeclarationStatementSyntax>().First();
+                    .OfType<LocalDeclarationStatementSyntax>().Single();
+
+                //The enclosing class is the first parent class found in the parents of the declaration
+                var containingClass = declaration.Ancestors().OfType<ClassDeclarationSyntax>().Single();
 
                 var typeInfo = model.GetTypeInfo(declaration.Declaration.Type);
 
@@ -54,42 +58,26 @@ namespace ExtractAnonymousType
                     context.RegisterCodeFix(
                         CodeAction.Create(
                             title: title,
-                            createChangedSolution: c => ExtractAnonymousType(context.Document, root, typeInfo, c),
-                            equivalenceKey: title),
+                            createChangedDocument: c => ExtractAnonymousType(context.Document, root, containingClass,
+                            typeInfo, c), equivalenceKey: title),
                         diagnostic);
                 }
             }
         }
 
-        private async Task<Solution> ExtractAnonymousType(Document document, SyntaxNode model, TypeInfo typeInfo,
-            CancellationToken cancellationToken)
+        private async Task<Document> ExtractAnonymousType(Document document, SyntaxNode documentRoot,
+            SyntaxNode containingClass, TypeInfo typeInfo, CancellationToken cancellationToken)
         {
             var properties = typeInfo.Type.GetMembers()
                 .Where(s => s.Kind == SymbolKind.Property)
                 .Select(s => new { Name = s.MetadataName, Type = s.GetType() });
 
-            var first = properties.First();
+            var newType = await CSharpSyntaxTree.ParseText(@"class Anon1 { public string P { get; set; } }")
+                .GetRootAsync();
 
-            //var def = typeInfo.Type.OriginalDefinition;
+            var newRoot = documentRoot.InsertNodesAfter(containingClass, newType.ChildNodes());
 
-            //var symbol = model.Compilation.GetSymbolsWithName(name => name == typeInfo.Type.Name);
-            var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
-            return null;
-            //// Compute new uppercase name.
-            //var identifierToken = typeDecl.Identifier;
-            //var newName = identifierToken.Text.ToUpperInvariant();
-
-            //// Get the symbol representing the type to be renamed.
-            //var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
-            //var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
-
-            //// Produce a new solution that has all references to that type renamed, including the declaration.
-            //var originalSolution = document.Project.Solution;
-            //var optionSet = originalSolution.Workspace.Options;
-            //var newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, typeSymbol, newName, optionSet, cancellationToken).ConfigureAwait(false);
-
-            //// Return the new solution with the now-uppercase type name.
-            //return newSolution;
+            return await Formatter.FormatAsync(document.WithSyntaxRoot(newRoot));
         }
     }
 }
