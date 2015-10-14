@@ -10,6 +10,7 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Text;
 
@@ -53,17 +54,22 @@ namespace ExtractAnonymousType
                     context.RegisterCodeFix(
                         CodeAction.Create(
                             title: title,
-                            createChangedSolution: c => ExtractAnonymousType(context.Document, model, c),
+                            createChangedSolution: c => ExtractAnonymousType(context.Document, root, typeInfo, c),
                             equivalenceKey: title),
                         diagnostic);
                 }
-
             }
         }
 
-        private async Task<Solution> ExtractAnonymousType(Document document, SemanticModel model,
+        private async Task<Solution> ExtractAnonymousType(Document document, SyntaxNode model, TypeInfo typeInfo,
             CancellationToken cancellationToken)
         {
+            var properties = typeInfo.Type.GetMembers()
+                .Where(s => s.Kind == SymbolKind.Property)
+                .Select(s => new { Name = s.MetadataName, Type = s.GetType() });
+
+            var first = properties.First();
+
             //var def = typeInfo.Type.OriginalDefinition;
 
             //var symbol = model.Compilation.GetSymbolsWithName(name => name == typeInfo.Type.Name);

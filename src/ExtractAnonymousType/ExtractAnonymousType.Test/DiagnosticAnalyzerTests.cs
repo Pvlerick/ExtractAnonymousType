@@ -53,26 +53,65 @@ namespace ExtractAnonymousType.Test
             // Teardown 
         }
 
-    //        var fixtest = @"
-    //using System;
+        [Fact]
+        public void CorrectSyntaxProducedWhenApplyingFixOnAnonymousType()
+        {
+            // Fixture setup
+            var test = @"
+    using System;
 
-    //namespace ConsoleApplication1
-    //{
-    //    class C
-    //    {
-    //        void M()
-    //        {
-    //            var a = new { P = ""dummy"" };
-    //        }
-    //    }
-    //
-    //    class A
-    //    {
-    //        public string P { get; set; }
-    //    }
-    //}";
-            //        VerifyCSharpFix(test, fixtest);
-    //}
+    namespace ConsoleApplication1
+    {
+        class C
+        {
+            void M()
+            {
+                var a = new { P = ""dummy"" };
+            }
+        }
+    }";
+
+            var fixtest = @"
+    using System;
+
+    namespace ConsoleApplication1
+    {
+        class C
+        {
+            void M()
+            {
+                var a = new { P = ""dummy"" };
+            }
+        }
+            
+        class A
+        {
+            public string P { get; set; }
+        }
+    }";
+
+            // Exercise system & Verify outcome
+            VerifyCSharpFix(test, fixtest);
+            // Teardown 
+        }
+
+        [Fact(Skip = "Not implemented yet")]
+        public void CorrectSyntaxProducedWhenApplyingFixOnAnonymousWithTwoProperties()
+        {
+            // Fixture setup
+            // Exercise system
+            // Verify outcome
+            // Teardown 
+        }
+
+        [Fact(Skip = "Not implemented yet")]
+        public void CorrectSyntaxProducedWhenApplyingFixOnAnonymousTypeUsedInTwoDifferentPlaces()
+        {
+            // Fixture setup
+            // Exercise system
+            // Verify outcome
+            // Teardown 
+        }
 
         protected override CodeFixProvider GetCSharpCodeFixProvider()
         {
