@@ -37,11 +37,11 @@ namespace ConsoleApplication1
     {
         void M()
         {
-            var a = new Anon1 { Foo = ""Bar"" };
+            var a = new MyType { Foo = ""Bar"" };
         }
     }
 
-    class Anon1
+    class MyType
     {
         public string Foo { get; set; }
     }
@@ -79,11 +79,11 @@ namespace ConsoleApplication1
     {
         void M()
         {
-            var a = new Anon1 { Foo = ""Bar"", Qux = 42 };
+            var a = new MyType { Foo = ""Bar"", Qux = 42 };
         }
     }
 
-    class Anon1
+    class MyType
     {
         public string Foo { get; set; }
         public int Qux { get; set; }
@@ -124,11 +124,11 @@ namespace ConsoleApplication1
         void M()
         {
             var sb = new System.Text.StringBuilder();
-            var a = new Anon1 { Foo = sb };
+            var a = new MyType { Foo = sb };
         }
     }
 
-    class Anon1
+    class MyType
     {
         public System.Text.StringBuilder Foo { get; set; }
     }
@@ -170,11 +170,11 @@ namespace ConsoleApplication1
         void M()
         {
             var sb = new System.Text.StringBuilder();
-            var a = new Anon1 { Foo = sb };
+            var a = new MyType { Foo = sb };
         }
     }
 
-    class Anon1
+    class MyType
     {
         public StringBuilder Foo { get; set; }
     }
@@ -213,12 +213,12 @@ namespace ConsoleApplication1
     {
         void M()
         {
-            var a = new Anon1 { Foo = ""Bar"", Qux = 42 };
-            var b = new Anon1 { Foo = ""B4r"", Qux = 43 };
+            var a = new MyType { Foo = ""Bar"", Qux = 42 };
+            var b = new MyType { Foo = ""B4r"", Qux = 43 };
         }
     }
 
-    class Anon1
+    class MyType
     {
         public string Foo { get; set; }
         public int Qux { get; set; }
@@ -231,13 +231,105 @@ namespace ConsoleApplication1
         }
 
 
-        [Fact(Skip = "Not implemented yet")]
+        [Fact]
         public void CorrectSyntaxWhenDefaultClassNameAlreadyExists()
         {
             // Fixture setup
-            // Exercise system
-            // Verify outcome
-            // Teardown 
+            var test = @"
+using System;
+
+namespace ConsoleApplication1
+{
+    class C
+    {
+        void M()
+        {
+            var a = new MyType { Foo = ""Bar"" };
+            var b = new { Qux = 43 };
+        }
+    }
+
+    class MyType
+    {
+        public string Foo { get; set; }
+    }
+}";
+
+            var fixtest = @"
+using System;
+
+namespace ConsoleApplication1
+{
+    class C
+    {
+        void M()
+        {
+            var a = new MyType { Foo = ""Bar"" };
+            var b = new MyType1 { Qux = 43 };
+        }
+    }
+
+    class MyType1
+    {
+        public int Qux { get; set; }
+    }
+
+    class MyType
+    {
+        public string Foo { get; set; }
+    }
+}";
+
+            // Exercise system & Verify outcome
+            VerifyCSharpFix(test, fixtest);
+            // Teardown
+        }
+
+        [Fact]
+        public void CorrectSyntaxWhenInsideStructInsteadOfClass()
+        {
+            // Fixture setup
+            var test = @"
+using System;
+
+namespace ConsoleApplication1
+{
+    struct S
+    {
+        void M()
+        {
+            var a = new MyType { Foo = ""Bar"" };
+        }
+    }
+
+    class MyType
+    {
+        public string Foo { get; set; }
+    }
+}";
+
+            var fixtest = @"
+using System;
+
+namespace ConsoleApplication1
+{
+    struct S
+    {
+        void M()
+        {
+            var a = new MyType { Foo = ""Bar"" };
+        }
+    }
+
+    class MyType
+    {
+        public string Foo { get; set; }
+    }
+}";
+
+            // Exercise system & Verify outcome
+            VerifyCSharpFix(test, fixtest);
+            // Teardown
         }
 
         protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer()

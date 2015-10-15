@@ -47,10 +47,12 @@ namespace ExtractAnonymousType
                 var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf()
                     .OfType<LocalDeclarationStatementSyntax>().Single();
 
-                //The enclosing class is the first parent class found in the parents of the declaration
-                var containingClass = declaration.Ancestors().OfType<ClassDeclarationSyntax>().Single();
-
                 var typeInfo = model.GetTypeInfo(declaration.Declaration.Type);
+
+                //The enclosing class is the first parent class found in the parents of the declaration
+                var containingType = declaration.Ancestors().OfType<TypeDeclarationSyntax>().Single();
+
+                var name = this.GetNewTypeName(containingType, model);
 
                 // One more check, just because we can...
                 if (typeInfo.Type.IsAnonymousType)
@@ -60,30 +62,47 @@ namespace ExtractAnonymousType
                         CodeAction.Create(
                             title: title,
                             createChangedDocument: c => ExtractAnonymousType(context.Document, root, model,
-                                containingClass, typeInfo, c), equivalenceKey: title),
+                                containingType, typeInfo, name, c), equivalenceKey: title),
                         diagnostic);
                 }
             }
         }
 
+        private string GetNewTypeName(TypeDeclarationSyntax containingType, SemanticModel model)
+        {
+            const string defaultName = "MyType";
+
+            var @namespace = model.GetDeclaredSymbol(containingType).ContainingNamespace;
+            var types = @namespace.GetMembers().OfType<ITypeSymbol>().Select(t => t.Name);
+
+            var name = defaultName;
+
+            int count = 1;
+            while (types.Contains(name))
+            {
+                name = defaultName + count++;
+            }
+
+            return name;
+        }
+
         private async Task<Document> ExtractAnonymousType(Document document, SyntaxNode documentRoot,
-            SemanticModel model, SyntaxNode containingClass, TypeInfo typeInfo, CancellationToken cancellationToken)
+            SemanticModel model, SyntaxNode containingClass, TypeInfo typeInfo, string newClassName,
+            CancellationToken cancellationToken)
         {
             var properties = typeInfo.Type.GetMembers()
                 .Where(s => s.Kind == SymbolKind.Property)
                 .Select(s => s as IPropertySymbol)
                 .Select(s => new { Name = s.MetadataName, Type = s.Type.ToDisplayString() });
 
-            var name = "Anon1";
-
-            var rewriter = new AnonymousObjectCreationExpressionRewriter(typeInfo.Type, model, name);
+            var rewriter = new AnonymousObjectCreationExpressionRewriter(typeInfo.Type, model, newClassName);
             var newRoot = rewriter.Visit(documentRoot);
 
             //SyntaxFactory.ClassDeclaration(name)
             //    .WithMembers(SyntaxFactory.List<MemberDeclarationSyntax>(new[] {
             //        SyntaxFactory.PropertyDeclaration()
             //    }));
-            var sb = new StringBuilder().AppendLine("class " + name);
+            var sb = new StringBuilder().AppendLine("class " + newClassName);
             sb.AppendLine("{");
             foreach (var p in properties)
             {
@@ -92,11 +111,11 @@ namespace ExtractAnonymousType
             sb.AppendLine("}");
 
             var newType = await CSharpSyntaxTree.ParseText(sb.ToString()).GetRootAsync();
-            var containingClassNewNode = newRoot.DescendantNodes().OfType<ClassDeclarationSyntax>()
-                .Where(c => c.Identifier.Text == (containingClass as ClassDeclarationSyntax).Identifier.Text)
+            var containingTypeNewNode = newRoot.DescendantNodes().OfType<TypeDeclarationSyntax>()
+                .Where(c => c.Identifier.Text == (containingClass as TypeDeclarationSyntax).Identifier.Text)
                 .First();
-            
-            newRoot = newRoot.InsertNodesAfter(containingClassNewNode, newType
+
+            newRoot = newRoot.InsertNodesAfter(containingTypeNewNode, newType
                 .WithLeadingTrivia(SyntaxFactory.LineFeed).ChildNodes());
 
             return await Formatter.FormatAsync(document.WithSyntaxRoot(newRoot));
