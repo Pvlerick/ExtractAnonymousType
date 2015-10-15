@@ -14,6 +14,7 @@ using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.CodeAnalysis.Formatting;
+using System.Text;
 
 namespace ExtractAnonymousType
 {
@@ -58,24 +59,43 @@ namespace ExtractAnonymousType
                     context.RegisterCodeFix(
                         CodeAction.Create(
                             title: title,
-                            createChangedDocument: c => ExtractAnonymousType(context.Document, root, containingClass,
-                            typeInfo, c), equivalenceKey: title),
+                            createChangedDocument: c => ExtractAnonymousType(context.Document, root, model,
+                                containingClass, typeInfo, c), equivalenceKey: title),
                         diagnostic);
                 }
             }
         }
 
         private async Task<Document> ExtractAnonymousType(Document document, SyntaxNode documentRoot,
-            SyntaxNode containingClass, TypeInfo typeInfo, CancellationToken cancellationToken)
+            SemanticModel model, SyntaxNode containingClass, TypeInfo typeInfo, CancellationToken cancellationToken)
         {
             var properties = typeInfo.Type.GetMembers()
                 .Where(s => s.Kind == SymbolKind.Property)
-                .Select(s => new { Name = s.MetadataName, Type = s.GetType() });
+                .Select(s => s as IPropertySymbol)
+                .Select(s => new { Name = s.MetadataName, Type = s.Type.ToDisplayString() });
 
-            var newType = await CSharpSyntaxTree.ParseText(@"class Anon1 { public string P { get; set; } }")
-                .GetRootAsync();
+            var name = "Anon1";
 
-            var newRoot = documentRoot.InsertNodesAfter(containingClass, newType.ChildNodes());
+            var rewriter = new AnonymousObjectCreationExpressionRewriter(typeInfo.Type, model, name);
+            var newRoot = rewriter.Visit(documentRoot);
+
+            //SyntaxFactory.ClassDeclaration(name)
+            //    .WithMembers(SyntaxFactory.List<MemberDeclarationSyntax>(new[] {
+            //        SyntaxFactory.PropertyDeclaration()
+            //    }));
+            var sb = new StringBuilder().AppendLine("class " + name);
+            sb.AppendLine("{");
+            foreach (var p in properties)
+            {
+                sb.AppendLine($"    public {p.Type} {p.Name} {{ get; set; }}");
+            }
+            sb.AppendLine("}");
+
+            var newType = await CSharpSyntaxTree.ParseText(sb.ToString()).GetRootAsync();
+            var containingClassNewNode = newRoot.DescendantNodes().OfType<ClassDeclarationSyntax>()
+                .Where(c => c.Identifier.Text == (containingClass as ClassDeclarationSyntax).Identifier.Text)
+                .First();
+            newRoot = newRoot.InsertNodesAfter(containingClassNewNode, newType.ChildNodes());
 
             return await Formatter.FormatAsync(document.WithSyntaxRoot(newRoot));
         }
