@@ -95,7 +95,9 @@ namespace ExtractAnonymousType
             var containingClassNewNode = newRoot.DescendantNodes().OfType<ClassDeclarationSyntax>()
                 .Where(c => c.Identifier.Text == (containingClass as ClassDeclarationSyntax).Identifier.Text)
                 .First();
-            newRoot = newRoot.InsertNodesAfter(containingClassNewNode, newType.ChildNodes());
+            
+            newRoot = newRoot.InsertNodesAfter(containingClassNewNode, newType
+                .WithLeadingTrivia(SyntaxFactory.LineFeed).ChildNodes());
 
             return await Formatter.FormatAsync(document.WithSyntaxRoot(newRoot));
         }

@@ -40,6 +40,7 @@ namespace ConsoleApplication1
             var a = new Anon1 { Foo = ""Bar"" };
         }
     }
+
     class Anon1
     {
         public string Foo { get; set; }
@@ -81,6 +82,7 @@ namespace ConsoleApplication1
             var a = new Anon1 { Foo = ""Bar"", Qux = 42 };
         }
     }
+
     class Anon1
     {
         public string Foo { get; set; }
@@ -125,6 +127,7 @@ namespace ConsoleApplication1
             var a = new Anon1 { Foo = sb };
         }
     }
+
     class Anon1
     {
         public System.Text.StringBuilder Foo { get; set; }
@@ -170,6 +173,7 @@ namespace ConsoleApplication1
             var a = new Anon1 { Foo = sb };
         }
     }
+
     class Anon1
     {
         public StringBuilder Foo { get; set; }
@@ -213,6 +217,7 @@ namespace ConsoleApplication1
             var b = new Anon1 { Foo = ""B4r"", Qux = 43 };
         }
     }
+
     class Anon1
     {
         public string Foo { get; set; }
@@ -234,9 +239,6 @@ namespace ConsoleApplication1
             // Verify outcome
             // Teardown 
         }
-
-
-
 
         protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer()
         {

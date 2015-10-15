@@ -35,6 +35,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="AnonymousObjectCreationExpressionRewriter.cs" />
     <Compile Include="ExtractAnonymousTypeCodeFixProvider.cs" />
     <Compile Include="ExtractAnonymousTypeAnalyzer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

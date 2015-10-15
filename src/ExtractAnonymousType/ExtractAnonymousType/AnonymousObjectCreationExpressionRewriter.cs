@@ -24,7 +24,7 @@ namespace ExtractAnonymousType
 
         public override SyntaxNode VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)
         {
-            if (model.GetTypeInfo(node.Declaration.Type).Type == targetAnonymousType)
+            if (model.GetTypeInfo(node.Declaration.Type).Type.Equals(targetAnonymousType))
             {
                 var declaration = node.DescendantNodes().OfType<AnonymousObjectCreationExpressionSyntax>().Single();
                 //Add the name of the new type just after the "new"
