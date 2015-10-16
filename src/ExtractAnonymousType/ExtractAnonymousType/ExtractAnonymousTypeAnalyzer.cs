@@ -35,37 +35,19 @@ namespace ExtractAnonymousType
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
         public ImmutableArray<SyntaxKind> SyntaxKindsOfInterest =>
-            ImmutableArray.Create(SyntaxKind.LocalDeclarationStatement);
+            ImmutableArray.Create(SyntaxKind.AnonymousObjectCreationExpression);
 
         public override void Initialize(AnalysisContext context)
         {
-            context.RegisterSyntaxNodeAction(AnalyzeSyntax, SyntaxKind.LocalDeclarationStatement);
+            context.RegisterSyntaxNodeAction(AnalyzeSyntax, SyntaxKind.AnonymousObjectCreationExpression);
         }
 
         private static void AnalyzeSyntax(SyntaxNodeAnalysisContext context)
         {
-            var localDeclaration = (LocalDeclarationStatementSyntax)context.Node;
+            var creationExpression = (AnonymousObjectCreationExpressionSyntax)context.Node;
 
-            var typeKeyword = localDeclaration.Declaration.Type;
-            var variablesCount = localDeclaration.Declaration.Variables.Count;
-
-            //Anonymous types are always declared with the var keyword and only one can be declared at the time
-            if (typeKeyword.IsVar && variablesCount == 1)
-            {
-                var variable = localDeclaration.Declaration.Variables[0];
-
-                var model = context.SemanticModel;
-                var variableSymbol = (ILocalSymbol)model.GetDeclaredSymbol(variable);
-
-                var type = variableSymbol.Type;
-
-                if (type.IsAnonymousType)
-                {
-                    var diagnostic = Diagnostic.Create(Rule, variableSymbol.Locations[0], variableSymbol.Name);
-
-                    context.ReportDiagnostic(diagnostic);
-                }
-            }
+            var diagnostic = Diagnostic.Create(Rule, creationExpression.GetLocation());
+            context.ReportDiagnostic(diagnostic);
         }
     }
 }

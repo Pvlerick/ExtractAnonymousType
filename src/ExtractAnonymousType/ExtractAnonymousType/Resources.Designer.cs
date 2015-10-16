@@ -71,7 +71,7 @@ namespace ExtractAnonymousType {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Variable &apos;{0}&apos; is an anonymous type.
+        ///   Looks up a localized string similar to Anonymous type used.
         /// </summary>
         internal static string AnalyzerMessageFormat {
             get {

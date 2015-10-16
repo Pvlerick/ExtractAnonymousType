@@ -1,11 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ExtractAnonymousType
 {
@@ -22,20 +17,20 @@ namespace ExtractAnonymousType
             this.newTypeName = newTypeName;
         }
 
-        public override SyntaxNode VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)
+        public override SyntaxNode VisitAnonymousObjectCreationExpression(AnonymousObjectCreationExpressionSyntax node)
         {
-            if (model.GetTypeInfo(node.Declaration.Type).Type.Equals(targetAnonymousType))
+            if (model.GetTypeInfo(node).Type.Equals(targetAnonymousType))
             {
-                var declaration = node.DescendantNodes().OfType<AnonymousObjectCreationExpressionSyntax>().Single();
-                //Add the name of the new type just after the "new"
-                var newDeclarationText = declaration.ToString().Insert(3, " " + newTypeName);
+                var newDeclarationText = node.ToString().Insert(3, " " + newTypeName);
                 var newDeclaration = SyntaxFactory.ParseExpression(newDeclarationText);
 
-                return node.ReplaceNode(declaration, newDeclaration);
+                //Cannot use type inference here otherwise a cast from ObjectCreationExpressionSyntax to
+                // AnonymousObjectCreationExpressionSyntax inside ReplaceNode will fail
+                return node.ReplaceNode<SyntaxNode>(node, newDeclaration);
             }
             else
             {
-                return base.VisitLocalDeclarationStatement(node);
+                return base.VisitAnonymousObjectCreationExpression(node);
             }
         }
     }

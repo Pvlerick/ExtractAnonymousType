@@ -1,20 +1,15 @@
-﻿using System;
+﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CodeActions;
+using Microsoft.CodeAnalysis.CodeFixes;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Formatting;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Composition;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CodeFixes;
-using Microsoft.CodeAnalysis.CodeActions;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.CSharp.Symbols;
-using Microsoft.CodeAnalysis.Rename;
-using Microsoft.CodeAnalysis.Text;
-using Microsoft.CodeAnalysis.Formatting;
-using System.Text;
 
 namespace ExtractAnonymousType
 {
@@ -42,29 +37,22 @@ namespace ExtractAnonymousType
             {
                 var diagnosticSpan = diagnostic.Location.SourceSpan;
 
-                // Find the type declaration identified by the diagnostic
-                // There can only be one, so Single() can be called
-                var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf()
-                    .OfType<LocalDeclarationStatementSyntax>().Single();
+                var expression = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf()
+                    .OfType<AnonymousObjectCreationExpressionSyntax>().Single();
 
-                var typeInfo = model.GetTypeInfo(declaration.Declaration.Type);
+                var typeInfo = model.GetTypeInfo(expression);
 
                 //The enclosing class is the first parent class found in the parents of the declaration
-                var containingType = declaration.Ancestors().OfType<TypeDeclarationSyntax>().Single();
+                var containingType = expression.Ancestors().OfType<TypeDeclarationSyntax>().Single();
 
                 var name = this.GetNewTypeName(containingType, model);
 
-                // One more check, just because we can...
-                if (typeInfo.Type.IsAnonymousType)
-                {
-                    // Register a code action that will invoke the fix.
-                    context.RegisterCodeFix(
-                        CodeAction.Create(
-                            title: title,
-                            createChangedDocument: c => ExtractAnonymousType(context.Document, root, model,
-                                containingType, typeInfo, name, c), equivalenceKey: title),
-                        diagnostic);
-                }
+                context.RegisterCodeFix(
+                    CodeAction.Create(
+                        title: title,
+                        createChangedDocument: c => ExtractAnonymousType(context.Document, root, model,
+                            containingType, typeInfo, name, c), equivalenceKey: title),
+                    diagnostic);
             }
         }
 
@@ -98,9 +86,9 @@ namespace ExtractAnonymousType
             var containingTypeNewNode = newRoot.DescendantNodes().OfType<TypeDeclarationSyntax>()
                 .Where(c => c.Identifier.Text == (containingClass as TypeDeclarationSyntax).Identifier.Text)
                 .First();
-
-            newRoot = newRoot.InsertNodesAfter(containingTypeNewNode, newClassSyntax
-                .WithLeadingTrivia(SyntaxFactory.LineFeed).ChildNodes());
+            
+            newRoot = newRoot.InsertNodesAfter(containingTypeNewNode, new[] { newClassSyntax
+                .WithLeadingTrivia(SyntaxFactory.LineFeed) });
 
             return await Formatter.FormatAsync(document.WithSyntaxRoot(newRoot));
         }

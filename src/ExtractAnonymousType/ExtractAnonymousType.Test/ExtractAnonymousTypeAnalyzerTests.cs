@@ -40,17 +40,53 @@ namespace ExtractAnonymousType.Test
             var expected = new DiagnosticResult
             {
                 Id = "ExtractAnonymousType",
-                Message = String.Format("Variable '{0}' is an anonymous type", "a"),
+                Message = "Anonymous type used",
                 Severity = DiagnosticSeverity.Info,
                 Locations =
                     new[] {
-                            new DiagnosticResultLocation("Test0.cs", 10, 21)
+                            new DiagnosticResultLocation("Test0.cs", 10, 25)
                         }
             };
             // Exercise system & Verify outcome
             VerifyCSharpDiagnostic(test, expected);
             // Teardown 
         }
+
+
+        [Fact]
+        public void CorrectDiagnosticWhenAnonymousTypeInProjection()
+        {
+            // Fixture setup
+            var test = @"
+using System;
+using System.Linq;
+
+namespace N
+{
+    class C
+    {
+        void M()
+        {
+            var q = Enumerable.Range(0, 5)
+                .Select(i => new { Qux = i });
+        }
+    }
+}";
+            var expected = new DiagnosticResult
+            {
+                Id = "ExtractAnonymousType",
+                Message = "Anonymous type used",
+                Severity = DiagnosticSeverity.Info,
+                Locations =
+                    new[] {
+                            new DiagnosticResultLocation("Test0.cs", 12, 30)
+                        }
+            };
+            // Exercise system & Verify outcome
+            VerifyCSharpDiagnostic(test, expected);
+            // Teardown 
+        }
+
 
         protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer()
         {

@@ -332,7 +332,7 @@ namespace N
             // Teardown
         }
 
-        [Fact(Skip = "Not implemented yet")]
+        [Fact]
         public void CorrectSyntaxWhenStatementIsInsideProjection()
         {
             // Fixture setup
@@ -377,6 +377,18 @@ namespace N
             VerifyCSharpFix(test, fixtest);
             // Teardown
         }
+
+
+        [Fact(Skip = "Not implemented yet")]
+        public void CreationWhenProjectIsInMemberDeclarationAndNotInMethod()
+        {
+            // Fixture setup
+            // Exercise system
+            // Verify outcome
+            // Teardown 
+        }
+
+
 
         protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer()
         {
