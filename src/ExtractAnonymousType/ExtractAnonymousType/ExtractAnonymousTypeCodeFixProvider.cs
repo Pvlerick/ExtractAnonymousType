@@ -87,38 +87,120 @@ namespace ExtractAnonymousType
         }
 
         private async Task<Document> ExtractAnonymousType(Document document, SyntaxNode documentRoot,
-            SemanticModel model, SyntaxNode containingClass, TypeInfo typeInfo, string newClassName,
+            SemanticModel model, SyntaxNode containingClass, TypeInfo anonymousTypeInfo, string newClassName,
             CancellationToken cancellationToken)
         {
-            var properties = typeInfo.Type.GetMembers()
-                .Where(s => s.Kind == SymbolKind.Property)
-                .Select(s => s as IPropertySymbol)
-                .Select(s => new { Name = s.MetadataName, Type = s.Type.ToDisplayString() });
-
-            var rewriter = new AnonymousObjectCreationExpressionRewriter(typeInfo.Type, model, newClassName);
+            var rewriter = new AnonymousObjectCreationExpressionRewriter(anonymousTypeInfo.Type, model, newClassName);
             var newRoot = rewriter.Visit(documentRoot);
 
-            //SyntaxFactory.ClassDeclaration(name)
-            //    .WithMembers(SyntaxFactory.List<MemberDeclarationSyntax>(new[] {
-            //        SyntaxFactory.PropertyDeclaration()
-            //    }));
-            var sb = new StringBuilder().AppendLine("class " + newClassName);
-            sb.AppendLine("{");
-            foreach (var p in properties)
-            {
-                sb.AppendLine($"    public {p.Type} {p.Name} {{ get; set; }}");
-            }
-            sb.AppendLine("}");
+            var newClassSyntax = this.GetClassSyntaxFromAnonymousType(anonymousTypeInfo, newClassName);
 
-            var newType = await CSharpSyntaxTree.ParseText(sb.ToString()).GetRootAsync();
             var containingTypeNewNode = newRoot.DescendantNodes().OfType<TypeDeclarationSyntax>()
                 .Where(c => c.Identifier.Text == (containingClass as TypeDeclarationSyntax).Identifier.Text)
                 .First();
 
-            newRoot = newRoot.InsertNodesAfter(containingTypeNewNode, newType
+            newRoot = newRoot.InsertNodesAfter(containingTypeNewNode, newClassSyntax
                 .WithLeadingTrivia(SyntaxFactory.LineFeed).ChildNodes());
 
             return await Formatter.FormatAsync(document.WithSyntaxRoot(newRoot));
+        }
+
+        private ClassDeclarationSyntax GetClassSyntaxFromAnonymousType(TypeInfo anonymousTypeInfo, string newClassName)
+        {
+            var properties = anonymousTypeInfo.Type.GetMembers()
+                .Where(s => s.Kind == SymbolKind.Property)
+                .Select(s => s as IPropertySymbol)
+                .Select(s => new { Name = s.MetadataName, Type = s.Type.ToDisplayString() });
+
+            var members = new List<MemberDeclarationSyntax>();
+
+            // This monster was generated with https://github.com/KirillOsenkov/RoslynQuoter
+            foreach (var p in properties)
+            {
+                members.Add(
+                    SyntaxFactory.PropertyDeclaration(
+                    SyntaxFactory.IdentifierName(
+                        SyntaxFactory.Identifier(
+                            SyntaxFactory.TriviaList(),
+                            p.Type,
+                            SyntaxFactory.TriviaList(
+                                SyntaxFactory.Space))),
+                        SyntaxFactory.Identifier(
+                            SyntaxFactory.TriviaList(),
+                            p.Name,
+                            SyntaxFactory.TriviaList(
+                                SyntaxFactory.Space)))
+                    .WithModifiers(
+                        SyntaxFactory.TokenList(
+                            SyntaxFactory.Token(
+                                SyntaxFactory.TriviaList(
+                                    SyntaxFactory.Whitespace(
+                                        @"    ")),
+                                SyntaxKind.PublicKeyword,
+                                SyntaxFactory.TriviaList(
+                                    SyntaxFactory.Space))))
+                    .WithAccessorList(
+                        SyntaxFactory.AccessorList(
+                            SyntaxFactory.List<AccessorDeclarationSyntax>(
+                                new AccessorDeclarationSyntax[]{
+                                    SyntaxFactory.AccessorDeclaration(
+                                        SyntaxKind.GetAccessorDeclaration)
+                                    .WithKeyword(
+                                        SyntaxFactory.Token(
+                                            SyntaxKind.GetKeyword))
+                                    .WithSemicolonToken(
+                                        SyntaxFactory.Token(
+                                            SyntaxFactory.TriviaList(),
+                                            SyntaxKind.SemicolonToken,
+                                            SyntaxFactory.TriviaList(
+                                                SyntaxFactory.Space))),
+                                    SyntaxFactory.AccessorDeclaration(
+                                        SyntaxKind.SetAccessorDeclaration)
+                                    .WithKeyword(
+                                        SyntaxFactory.Token(
+                                            SyntaxKind.SetKeyword))
+                                    .WithSemicolonToken(
+                                        SyntaxFactory.Token(
+                                            SyntaxFactory.TriviaList(),
+                                            SyntaxKind.SemicolonToken,
+                                            SyntaxFactory.TriviaList(
+                                                SyntaxFactory.Space)))}))
+                        .WithOpenBraceToken(
+                            SyntaxFactory.Token(
+                                SyntaxFactory.TriviaList(),
+                                SyntaxKind.OpenBraceToken,
+                                SyntaxFactory.TriviaList(
+                                    SyntaxFactory.Space)))
+                        .WithCloseBraceToken(
+                            SyntaxFactory.Token(
+                                SyntaxFactory.TriviaList(),
+                                SyntaxKind.CloseBraceToken,
+                                SyntaxFactory.TriviaList(
+                                    SyntaxFactory.LineFeed)))));
+            }
+
+            return SyntaxFactory.ClassDeclaration(
+                SyntaxFactory.Identifier(
+                    SyntaxFactory.TriviaList(),
+                    newClassName,
+                    SyntaxFactory.TriviaList(
+                        SyntaxFactory.LineFeed)))
+                .WithKeyword(
+                    SyntaxFactory.Token(
+                        SyntaxFactory.TriviaList(),
+                        SyntaxKind.ClassKeyword,
+                        SyntaxFactory.TriviaList(
+                            SyntaxFactory.Space)))
+                .WithOpenBraceToken(
+                    SyntaxFactory.Token(
+                        SyntaxFactory.TriviaList(),
+                        SyntaxKind.OpenBraceToken,
+                        SyntaxFactory.TriviaList(
+                            SyntaxFactory.LineFeed)))
+                .WithMembers(SyntaxFactory.List(members))
+                .WithCloseBraceToken(
+                    SyntaxFactory.Token(
+                        SyntaxKind.CloseBraceToken));
         }
     }
 }

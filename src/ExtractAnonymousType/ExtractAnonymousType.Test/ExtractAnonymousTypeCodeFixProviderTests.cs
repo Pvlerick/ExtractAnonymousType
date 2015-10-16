@@ -17,7 +17,7 @@ namespace ExtractAnonymousType.Test
             var test = @"
 using System;
 
-namespace ConsoleApplication1
+namespace N
 {
     class C
     {
@@ -31,7 +31,7 @@ namespace ConsoleApplication1
             var fixtest = @"
 using System;
 
-namespace ConsoleApplication1
+namespace N
 {
     class C
     {
@@ -59,7 +59,7 @@ namespace ConsoleApplication1
             var test = @"
 using System;
 
-namespace ConsoleApplication1
+namespace N
 {
     class C
     {
@@ -73,7 +73,7 @@ namespace ConsoleApplication1
             var fixtest = @"
 using System;
 
-namespace ConsoleApplication1
+namespace N
 {
     class C
     {
@@ -102,7 +102,7 @@ namespace ConsoleApplication1
             var test = @"
 using System;
 
-namespace ConsoleApplication1
+namespace N
 {
     class C
     {
@@ -117,7 +117,7 @@ namespace ConsoleApplication1
             var fixtest = @"
 using System;
 
-namespace ConsoleApplication1
+namespace N
 {
     class C
     {
@@ -147,7 +147,7 @@ namespace ConsoleApplication1
 using System;
 using System.Text;
 
-namespace ConsoleApplication1
+namespace N
 {
     class C
     {
@@ -163,7 +163,7 @@ namespace ConsoleApplication1
 using System;
 using System.Text;
 
-namespace ConsoleApplication1
+namespace N
 {
     class C
     {
@@ -192,7 +192,7 @@ namespace ConsoleApplication1
             var test = @"
 using System;
 
-namespace ConsoleApplication1
+namespace N
 {
     class C
     {
@@ -207,7 +207,7 @@ namespace ConsoleApplication1
             var fixtest = @"
 using System;
 
-namespace ConsoleApplication1
+namespace N
 {
     class C
     {
@@ -238,7 +238,7 @@ namespace ConsoleApplication1
             var test = @"
 using System;
 
-namespace ConsoleApplication1
+namespace N
 {
     class C
     {
@@ -258,7 +258,7 @@ namespace ConsoleApplication1
             var fixtest = @"
 using System;
 
-namespace ConsoleApplication1
+namespace N
 {
     class C
     {
@@ -292,7 +292,7 @@ namespace ConsoleApplication1
             var test = @"
 using System;
 
-namespace ConsoleApplication1
+namespace N
 {
     struct S
     {
@@ -311,7 +311,7 @@ namespace ConsoleApplication1
             var fixtest = @"
 using System;
 
-namespace ConsoleApplication1
+namespace N
 {
     struct S
     {
@@ -324,6 +324,52 @@ namespace ConsoleApplication1
     class MyType
     {
         public string Foo { get; set; }
+    }
+}";
+
+            // Exercise system & Verify outcome
+            VerifyCSharpFix(test, fixtest);
+            // Teardown
+        }
+
+        [Fact(Skip = "Not implemented yet")]
+        public void CorrectSyntaxWhenStatementIsInsideProjection()
+        {
+            // Fixture setup
+            var test = @"
+using System;
+using System.Linq;
+
+namespace N
+{
+    class C
+    {
+        void M()
+        {
+            var q = Enumerable.Range(0, 5)
+                .Select(i => new { Qux = i });
+        }
+    }
+}";
+
+            var fixtest = @"
+using System;
+using System.Linq;
+
+namespace N
+{
+    class C
+    {
+        void M()
+        {
+            var q = Enumerable.Range(0, 5)
+                .Select(i => new MyType { Qux = i });
+        }
+    }
+
+    class MyType
+    {
+        public int Qux { get; set; }
     }
 }";
 
