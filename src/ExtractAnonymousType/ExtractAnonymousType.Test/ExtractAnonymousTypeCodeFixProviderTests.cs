@@ -389,7 +389,7 @@ namespace N
     class C
     {
         IEnumerable<string> s = Enumerable.Range(0, 5)
-            .Select(i => new MyType { Foo = ""Bar"", Qux = i })
+            .Select(i => new { Foo = ""Bar"", Qux = i })
             .Select(a => a.Foo + a.Qux);
     }
 }";
@@ -405,7 +405,7 @@ namespace N
     {
         IEnumerable<string> s = Enumerable.Range(0, 5)
             .Select(i => new MyType { Foo = ""Bar"", Qux = i })
-            .Select(t => t.N + t.I);
+            .Select(a => a.Foo + a.Qux);
     }
 
     class MyType
