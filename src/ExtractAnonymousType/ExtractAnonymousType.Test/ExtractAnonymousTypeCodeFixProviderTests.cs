@@ -1,9 +1,6 @@
-﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CodeFixes;
+﻿using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.Diagnostics;
-using System;
 using TestHelper;
-using ExtractAnonymousType;
 using Xunit;
 
 namespace ExtractAnonymousType.Test
@@ -378,14 +375,49 @@ namespace N
             // Teardown
         }
 
-
-        [Fact(Skip = "Not implemented yet")]
-        public void CreationWhenProjectIsInMemberDeclarationAndNotInMethod()
+        [Fact]
+        public void CorrectSyntaxWhenStatementIsInsideProjectionInFieldInitialization()
         {
             // Fixture setup
-            // Exercise system
-            // Verify outcome
-            // Teardown 
+            var test = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace N
+{
+    class C
+    {
+        IEnumerable<string> s = Enumerable.Range(0, 5)
+            .Select(i => new MyType { Foo = ""Bar"", Qux = i })
+            .Select(a => a.Foo + a.Qux);
+    }
+}";
+
+            var fixtest = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace N
+{
+    class C
+    {
+        IEnumerable<string> s = Enumerable.Range(0, 5)
+            .Select(i => new MyType { Foo = ""Bar"", Qux = i })
+            .Select(t => t.N + t.I);
+    }
+
+    class MyType
+    {
+        public string Foo { get; set; }
+        public int Qux { get; set; }
+    }
+}";
+
+            // Exercise system & Verify outcome
+            VerifyCSharpFix(test, fixtest);
+            // Teardown
         }
 
 

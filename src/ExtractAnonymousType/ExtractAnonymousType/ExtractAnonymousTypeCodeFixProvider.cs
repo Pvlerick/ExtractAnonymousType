@@ -50,7 +50,7 @@ namespace ExtractAnonymousType
                 context.RegisterCodeFix(
                     CodeAction.Create(
                         title: title,
-                        createChangedDocument: c => ExtractAnonymousType(context.Document, root, model,
+                        createChangedDocument: c => ExtractAnonymousTypeAsync(context.Document, root, model,
                             containingType, typeInfo, name, c), equivalenceKey: title),
                     diagnostic);
             }
@@ -74,7 +74,7 @@ namespace ExtractAnonymousType
             return name;
         }
 
-        private async Task<Document> ExtractAnonymousType(Document document, SyntaxNode documentRoot,
+        private async Task<Document> ExtractAnonymousTypeAsync(Document document, SyntaxNode documentRoot,
             SemanticModel model, SyntaxNode containingClass, TypeInfo anonymousTypeInfo, string newClassName,
             CancellationToken cancellationToken)
         {

@@ -1,12 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
-using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using System.Collections.Immutable;
 
 namespace ExtractAnonymousType
 {
@@ -25,8 +21,7 @@ namespace ExtractAnonymousType
             new LocalizableResourceString(nameof(Resources.AnalyzerDescription),
                 Resources.ResourceManager, typeof(Resources));
 
-        //TODO Change Category
-        private const string Category = "Naming";
+        private const string Category = "Design";
 
         private static DiagnosticDescriptor Rule =
             new DiagnosticDescriptor(DiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Info,
