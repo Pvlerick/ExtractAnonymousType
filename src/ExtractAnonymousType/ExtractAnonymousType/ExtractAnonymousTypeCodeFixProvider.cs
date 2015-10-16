@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Composition;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -81,19 +82,19 @@ namespace ExtractAnonymousType
             var rewriter = new AnonymousObjectCreationExpressionRewriter(anonymousTypeInfo.Type, model, newClassName);
             var newRoot = rewriter.Visit(documentRoot);
 
-            var newClassSyntax = this.GetClassSyntaxFromAnonymousType(anonymousTypeInfo, newClassName);
-
             var containingTypeNewNode = newRoot.DescendantNodes().OfType<TypeDeclarationSyntax>()
                 .Where(c => c.Identifier.Text == (containingClass as TypeDeclarationSyntax).Identifier.Text)
                 .First();
-            
-            newRoot = newRoot.InsertNodesAfter(containingTypeNewNode, new[] { newClassSyntax
-                .WithLeadingTrivia(SyntaxFactory.LineFeed) });
+
+            var newClassSyntax = this.GetClassSyntaxFromAnonymousType(anonymousTypeInfo, newClassName);
+
+            newRoot = newRoot.InsertNodesAfter(containingTypeNewNode, newClassSyntax
+                .WithLeadingTrivia(SyntaxFactory.LineFeed).ChildNodes());
 
             return await Formatter.FormatAsync(document.WithSyntaxRoot(newRoot));
         }
 
-        private ClassDeclarationSyntax GetClassSyntaxFromAnonymousType(TypeInfo anonymousTypeInfo, string newClassName)
+        private SyntaxNode GetClassSyntaxFromAnonymousType(TypeInfo anonymousTypeInfo, string newClassName)
         {
             var properties = anonymousTypeInfo.Type.GetMembers()
                 .Where(s => s.Kind == SymbolKind.Property)
@@ -102,17 +103,12 @@ namespace ExtractAnonymousType
 
             var members = new List<MemberDeclarationSyntax>();
 
-            // This monster was generated with https://github.com/KirillOsenkov/RoslynQuoter
+            // This monster was generated with the help of https://github.com/KirillOsenkov/RoslynQuoter
             foreach (var p in properties)
             {
                 members.Add(
                     SyntaxFactory.PropertyDeclaration(
-                    SyntaxFactory.IdentifierName(
-                        SyntaxFactory.Identifier(
-                            SyntaxFactory.TriviaList(),
-                            p.Type,
-                            SyntaxFactory.TriviaList(
-                                SyntaxFactory.Space))),
+                        SyntaxFactory.ParseTypeName(p.Type),
                         SyntaxFactory.Identifier(
                             SyntaxFactory.TriviaList(),
                             p.Name,
@@ -167,28 +163,31 @@ namespace ExtractAnonymousType
                                     SyntaxFactory.LineFeed)))));
             }
 
-            return SyntaxFactory.ClassDeclaration(
-                SyntaxFactory.Identifier(
-                    SyntaxFactory.TriviaList(),
-                    newClassName,
-                    SyntaxFactory.TriviaList(
-                        SyntaxFactory.LineFeed)))
-                .WithKeyword(
-                    SyntaxFactory.Token(
-                        SyntaxFactory.TriviaList(),
-                        SyntaxKind.ClassKeyword,
-                        SyntaxFactory.TriviaList(
-                            SyntaxFactory.Space)))
-                .WithOpenBraceToken(
-                    SyntaxFactory.Token(
-                        SyntaxFactory.TriviaList(),
-                        SyntaxKind.OpenBraceToken,
-                        SyntaxFactory.TriviaList(
-                            SyntaxFactory.LineFeed)))
-                .WithMembers(SyntaxFactory.List(members))
-                .WithCloseBraceToken(
-                    SyntaxFactory.Token(
-                        SyntaxKind.CloseBraceToken));
+            return SyntaxFactory.CompilationUnit()
+                .WithMembers(
+                    SyntaxFactory.SingletonList<MemberDeclarationSyntax>(
+                        SyntaxFactory.ClassDeclaration(
+                        SyntaxFactory.Identifier(
+                            SyntaxFactory.TriviaList(),
+                            newClassName,
+                            SyntaxFactory.TriviaList(
+                                SyntaxFactory.LineFeed)))
+                        .WithKeyword(
+                            SyntaxFactory.Token(
+                                SyntaxFactory.TriviaList(),
+                                SyntaxKind.ClassKeyword,
+                                SyntaxFactory.TriviaList(
+                                    SyntaxFactory.Space)))
+                        .WithOpenBraceToken(
+                            SyntaxFactory.Token(
+                                SyntaxFactory.TriviaList(),
+                                SyntaxKind.OpenBraceToken,
+                                SyntaxFactory.TriviaList(
+                                    SyntaxFactory.LineFeed)))
+                        .WithMembers(SyntaxFactory.List(members))
+                        .WithCloseBraceToken(
+                            SyntaxFactory.Token(
+                                SyntaxKind.CloseBraceToken))));
         }
     }
 }
