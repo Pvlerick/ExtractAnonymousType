@@ -7,9 +7,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("ExtractAnonymousType")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Ogone")]
+[assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("ExtractAnonymousType")]
-[assembly: AssemblyCopyright("Copyright © Ogone 2015")]
+[assembly: AssemblyCopyright("Copyright © Philippe Vlérick 2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
